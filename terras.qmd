@@ -1,0 +1,205 @@
+---
+title: "TERRAS AGRÍCOLAS"
+output: html_document
+---
+<style>
+  h1 {
+    text-align: center;
+  }
+</style>
+---
+
+------------------------------------------------------------------------
+
+```{r}
+#| label: terrasagrícolas #NOMES UNICOS
+#| include: false #NÃO INCLUI O RESULTADO NO DOC
+
+library(tidyverse) #PACOTE GGPLT2 (GRÁFICOS)
+library(WDI) #PACOTE DOS DADOS
+
+#BASE DE DADOS
+#COLOCAR OS TRÊS OBJETOS DE DADOS
+
+# DADOS EM PAINEL
+terrasagrícolas <-  WDI(country = 'all',
+                            indicator = 'AG.LND.AGRI.ZS')
+
+# CORTE TRANSVERSAL
+terrasagrícolas2024 <-  WDI(country = 'all',
+                                indicator = 'AG.LND.AGRI.ZS',
+                                start = 2024, end =  2024)
+
+# SÉRIE TEMPORAL
+terrasagrícolasbr <- WDI(country = 'BR',
+                             indicator = 'AG.LND.AGRI.ZS')
+
+```
+
+-   **VARIAVEL AG.LND.AGRI.ZS**
+
+A variável AG.LND.AGRI.ZS representa a proporção de terras agrícolas de um país ou região, expressa como uma porcentagem do total de terras do país. ela indica a quantidade de terras destinadas à agricultura (como lavouras, pastagens e florestas manejadas) em relação ao território total de um país. A medida é útil para compreender a intensidade do uso agrícola da terra e o papel da agricultura na economia de um país. A medida é útil para compreender a intensidade do uso agrícola da terra e o papel da agricultura na economia de um país.
+
+-   **GRÁFICO DADOS EM PAINEL**
+
+O gráfico oferece uma visão clara e comparativa sobre como três dos maiores países do mundo gerem suas terras agrícolas ao longo das últimas décadas. Embora a agricultura continue sendo crucial para a Índia e a China, os Estados Unidos demonstram uma mudança progressiva para um uso mais diversificado do solo, refletindo as transformações econômicas e sociais de cada país.
+
+-   **Índia**: A Índia apresenta uma linha consistente e relativamente alta ao longo do período, indicando que uma grande parte do seu território é dedicado à agricultura. Isso é esperado, já que a agricultura é uma das atividades econômicas mais importantes no país, empregando uma grande parte da população rural
+
+-   **Estados Unidos (representados pela linha azul escura)**: A linha dos EUA fica consideravelmente abaixo das outras, refletindo a menor proporção de terras agrícolas no total do país. Isso se alinha com o perfil agrícola do país, que tem uma grande parte do seu território voltado para a agricultura, mas de maneira mais **intensiva** e mecanizada, em contraste com a dependência de mão de obra agrícola em países como a Índia. A linha também mostra uma leve tendência de queda, provavelmente devido à crescente urbanização e à utilização de terras para outros fins.
+
+-   **China (representada pela linha laranja)**: A China, com sua grande população e forte dependência da agricultura, tem uma linha que se mantém em níveis moderados ao longo do tempo, com variações que podem ser atribuídas a mudanças nas políticas agrícolas, como as reformas econômicas ou os esforços para melhorar a produtividade agrícola.
+
+```{r}
+#| label: dadosempainel
+#| warning: false
+#| echo: false
+
+library(dplyr)
+library(ggplot2)
+
+# Selecionar apenas Índia, EUA e China
+paises <- c("India", "United States", "China")
+
+# Criar dados_painel a partir de terrasagrícolas
+dados_painel <- terrasagrícolas %>%
+  filter(country %in% paises) %>%
+  mutate(year = as.numeric(year))
+
+# Gráfico
+ggplot(dados_painel, aes(x = year, y = AG.LND.AGRI.ZS, color = country)) +
+  geom_line(size = 1.5) +
+  labs(
+    title = "Terras Agrícolas (Índia, EUA e China)",
+    x = "Ano",
+    y = NULL,  # Remove o texto "% de Terras Agrícolas"
+    color = "País"
+  ) +
+  scale_y_continuous(labels = scales::label_percent(scale = 1)) +
+  scale_color_manual(values = c(
+    "India" = "#E63946",
+    "United States" = "#457B9D",
+    "China" = "#F4A261"
+  )) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold", size = 18, hjust = 0.5),
+    legend.title = element_text(face = "bold"),
+    legend.position = "bottom",
+    axis.title.y = element_blank()
+  )
+
+```
+
+-   **GRÁFICO CORTE TRANSVERSAL**
+
+    O gráfico acima apresenta uma **comparação transversal** da proporção de terras agrícolas em três países , **Índia, Estados Unidos e China**, no ano de **2020**. O gráfico mostra que cada país dedica uma parcela diferente do seu território à agricultura.
+
+-   A **Índia** geralmente apresenta uma das maiores proporções de terras agrícolas, refletindo sua forte dependência da agricultura.
+
+-   Os **Estados Unidos** têm uma proporção relevante, mas menor do que a da Índia, refletindo uma agricultura altamente mecanizada e produtiva.
+
+-   A **China** também possui uma proporção significativa, considerando sua população e desafios geográficos.
+
+```{r}
+#| label: cortetransversal
+#| warning: false
+#| echo: false
+
+library(WDI)
+library(dplyr)
+library(ggplot2)
+
+# Baixar os dados de 2020 para Índia, EUA e China
+dados_2020 <- WDI(
+  country = c("IN", "US", "CN"),
+  indicator = "AG.LND.AGRI.ZS",
+  start = 2020,
+  end = 2020
+)
+
+# Filtrar e reordenar os países manualmente
+dados_2020_validos <- dados_2020 %>%
+  filter(!is.na(AG.LND.AGRI.ZS)) %>%
+  mutate(country = factor(country, levels = c("India", "China", "United States")))
+
+# Gráfico com ordem personalizada
+ggplot(dados_2020_validos, aes(x = country, y = AG.LND.AGRI.ZS, fill = country)) +
+  geom_col(show.legend = FALSE, width = 0.5) +  # Ajuste da espessura das barras
+  geom_text(aes(label = paste0(round(AG.LND.AGRI.ZS, 1), "%")),
+            vjust = -0.5, size = 5, color = "black") +
+  scale_y_continuous(labels = scales::label_percent(scale = 1), # Formatar como porcentagem
+                     expand = expansion(mult = c(0, 0.1))) +
+  scale_fill_manual(values = c(
+    "India" = "#E63946",
+    "China" = "#F4A261",
+    "United States" = "#457B9D"
+  )) +
+  labs(
+    title = "Terras Agrícolas (Índia, China e EUA) em 2020",
+    x = NULL,  # Remover título do eixo X
+    y = NULL  # Remover título do eixo Y
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold", size = 18, hjust = 0.5),
+    axis.text.x = element_text(face = "bold", size = 12),
+    axis.title.x = element_blank(),  # Remover título do eixo X
+    axis.title.y = element_blank()  # Remover título do eixo Y
+  )
+
+```
+
+-   **GRÁFICO SÉRIE TEMPORAL**
+
+O gráfico apresenta a evolução da proporção de terras agrícolas no Brasil entre 1960 e os anos mais recentes. Ele mostra o percentual da área total do país utilizada para agricultura variou ao longo do tempo. Essa visualização permite identificar tendências no uso do solo, indicando períodos de expansão, estabilidade ou retração da atividade agrícola brasileira.
+
+Variações significativas podem refletir:
+
+-   Mudanças na política agrícola;
+
+-   Adoção de novas tecnologias;
+
+-   Pressão por preservação ambiental ou expansão urbana;
+
+-   Mudanças climáticas que afetam o uso do solo.
+
+```{r}
+#| label: serietemporal_brasil
+#| warning: false
+#| echo: false
+
+# Carregar pacotes necessários
+library(WDI)
+library(ggplot2)
+library(dplyr)
+
+# Baixar dados da variável AG.LND.AGRI.ZS para o Brasil
+dados_series <- WDI(
+  country = "BR",
+  indicator = "AG.LND.AGRI.ZS",
+  start = 1960,
+  end = as.numeric(format(Sys.Date(), "%Y"))
+)
+
+# Preparar os dados
+dados_series <- dados_series %>%
+  filter(!is.na(AG.LND.AGRI.ZS)) %>%
+  mutate(year = as.numeric(year))
+
+# Gráfico com ambos os eixos sem rótulo
+ggplot(dados_series, aes(x = year, y = AG.LND.AGRI.ZS)) +
+  geom_line(color = "#00C853", size = 1.5) +
+  scale_y_continuous(labels = scales::label_percent(scale = 1)) +
+  labs(
+    title = "Terras Agrícolas no Brasil",
+    x = NULL,
+    y = NULL
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold", size = 18, hjust = 0.5),
+    axis.text = element_text(size = 12)
+  )
+
+```
